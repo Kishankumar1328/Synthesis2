@@ -22,6 +22,39 @@ def train_model(data_path, output_path, algorithm='CTGAN', epochs=300, batch_siz
     try:
         metadata = SingleTableMetadata()
         metadata.detect_from_dataframe(data)
+        
+        # Privacy & PII Protection Layer
+        # Rule: Replace all sensitive attributes with fully synthetic values
+        pii_patterns = {
+            'email': 'email',
+            'mail': 'email',
+            'phone': 'phone_number',
+            'tel': 'phone_number',
+            'ssn': 'ssn',
+            'social': 'ssn',
+            'card': 'credit_card_number',
+            'credit': 'credit_card_number',
+            'iban': 'iban',
+            'address': 'address',
+            'city': 'city',
+            'country': 'country',
+            'name': 'person_name',
+            'first_name': 'first_name',
+            'last_name': 'last_name'
+        }
+        
+        logger.info("Applying Privacy-Safe Configuration...")
+        for col in metadata.columns:
+            col_lower = col.lower()
+            for pattern, sdtype in pii_patterns.items():
+                if pattern in col_lower and metadata.columns[col]['sdtype'] not in ['numerical', 'datetime']:
+                    logger.info(f"  - Flagged '{col}' as PII ({sdtype}). Will generate fully synthetic values.")
+                    try:
+                        metadata.update_column(column_name=col, sdtype=sdtype)
+                    except Exception as meta_err:
+                        logger.warning(f"    Could not auto-configure PII for {col}: {meta_err}")
+                    break
+
     except Exception as e:
         logger.error(f"Metadata detection failed: {e}")
         sys.exit(1)

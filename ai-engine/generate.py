@@ -52,31 +52,61 @@ def generate(model_path, count, output_path, original_path=None, anomaly_json=No
         logger.info(f"Loading original data for leakage protection from {original_path}")
         original_df = pd.read_csv(original_path)
 
-    logger.info(f"Generating {count} synthetic records...")
+    generated_data = pd.DataFrame()
     
-    # Batch generation to avoid memory issues and handle leakage
-    batch_size = count
-    samples = model.sample(num_rows=batch_size)
+    logger.info(f"Generating {count} privacy-safe synthetic records...")
     
-    # Leakage Protection
-    if original_df is not None and not original_df.empty:
-        logger.info("Performing leakage audit...")
-        cols = list(original_df.columns)
-        samples_to_check = samples[cols]
+    attempts = 0
+    max_attempts = 10
+    
+    while len(generated_data) < count and attempts < max_attempts:
+        attempts += 1
+        needed = count - len(generated_data)
+        # Generate slightly more than needed to account for potential filtering
+        batch_size = int(needed * 1.1) + 10
+        logger.info(f"Generation Pass {attempts}/{max_attempts}: Generating {batch_size} records...")
         
-        merged = samples_to_check.merge(original_df, on=cols, how='left', indicator=True)
-        leaked_indices = merged[merged['_merge'] == 'both'].index
-        
-        if len(leaked_indices) > 0:
-            logger.warning(f"Detected {len(leaked_indices)} leaked records. Regenerating...")
-            # Simple approach: just drop them. In true prod, we might regenerate until we reach count.
-            samples = samples.drop(leaked_indices)
-            logger.info(f"Retained {len(samples)} unique synthetic records.")
+        try:
+            samples = model.sample(num_rows=batch_size)
+        except Exception as e:
+            logger.error(f"Sampling failed: {e}")
+            break
 
-    # Apply Anomalies
-    anomalies = load_anomalies(anomaly_json)
-    if anomalies:
-        samples = apply_anomalies(samples, anomalies)
+        # Apply Anomalies (Inject before leakage check to ensure injected values don't leak)
+        anomalies = load_anomalies(anomaly_json)
+        if anomalies:
+            samples = apply_anomalies(samples, anomalies)
+
+        # Leakage Protection & Privacy Filter
+        if original_df is not None and not original_df.empty:
+            cols = list(original_df.columns)
+            # Ensure columns match
+            common_cols = [c for c in cols if c in samples.columns]
+            
+            if len(common_cols) > 0:
+                samples_to_check = samples[common_cols]
+                merged = samples_to_check.merge(original_df, on=common_cols, how='left', indicator=True)
+                leaked_indices = merged[merged['_merge'] == 'both'].index
+                
+                if len(leaked_indices) > 0:
+                    logger.warning(f"  - Detected {len(leaked_indices)} leaked records (Projected Strictness: High). Removing...")
+                    samples = samples.drop(leaked_indices)
+                else:
+                    logger.info("  - No leakage detected.")
+        
+        generated_data = pd.concat([generated_data, samples], ignore_index=True)
+        # Remove internal duplicates if any
+        generated_data = generated_data.drop_duplicates()
+        
+    # Trim to exact count
+    if len(generated_data) > count:
+        generated_data = generated_data.head(count)
+    
+    logger.info(f"Final Dataset: {len(generated_data)} records generated.")
+    if len(generated_data) < count:
+        logger.warning(f"Could not generate full {count} unique records after {max_attempts} attempts.")
+        
+    samples = generated_data
 
     logger.info(f"Saving synthetic data to {output_path}...")
     try:
