@@ -1,4 +1,4 @@
-# SynthoGen Enterprise: AI-Powered Synthetic Data Platform
+# SYNTHESIS - Intelligence Engine
 
 SynthoGen is a production-grade platform for generating high-fidelity, statistically accurate synthetic data with **Zero-Leakage** guarantees. Designed for financial institutions and data-sensitive industries.
 
