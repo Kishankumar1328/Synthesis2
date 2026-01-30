@@ -3,3 +3,16 @@ pandas==2.3.3
 numpy==2.4.0
 scikit-learn==1.8.0
 sdmetrics==0.24.0
+
+# AI Copilot dependencies
+flask==3.0.0
+flask-cors==4.0.0
+langchain==0.1.0
+langchain-community==0.0.13
+python-dotenv==1.0.0
+requests==2.31.0
+
+# File handling dependencies
+openpyxl==3.1.2
+werkzeug==3.0.1
+scipy==1.11.4

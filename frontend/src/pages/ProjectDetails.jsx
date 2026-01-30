@@ -2,6 +2,29 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ProjectAPI, DatasetAPI, ModelAPI } from '../api';
 import AnalyticsDashboard from '../components/AnalyticsDashboard';
+import {
+    ChevronLeft,
+    Network,
+    Database,
+    Upload,
+    Settings,
+    ChevronDown,
+    ChevronUp,
+    Cpu,
+    BarChart3,
+    Brain,
+    PlayCircle,
+    Activity,
+    Sparkles,
+    CheckCircle2,
+    Clock,
+    AlertCircle,
+    Fingerprint,
+    Trash2,
+    Edit3,
+    Check,
+    X
+} from 'lucide-react';
 
 export default function ProjectDetails() {
     const { id } = useParams();
@@ -16,6 +39,17 @@ export default function ProjectDetails() {
     const [loadingStats, setLoadingStats] = useState(false);
     const [selectedAlgorithm, setSelectedAlgorithm] = useState('CTGAN');
     const [error, setError] = useState(null);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editName, setEditName] = useState('');
+    const [hyperparams, setHyperparams] = useState({
+        epochs: 300,
+        batchSize: 500,
+        learningRate: 0.0002,
+        discriminatorSteps: 1,
+        generatorDim: '256,256',
+        discriminatorDim: '256,256'
+    });
+    const [showTuneSettings, setShowTuneSettings] = useState(false);
 
     const algorithms = [
         { id: 'CTGAN', name: 'CTGAN', desc: 'Neural network GAN for mixed tabular data' },
@@ -28,6 +62,7 @@ export default function ProjectDetails() {
         try {
             const res = await ProjectAPI.getOne(id);
             setProject(res.data);
+            setEditName(res.data.name);
             setError(null);
         } catch (e) {
             console.error('Failed to load project:', e);
@@ -118,7 +153,8 @@ export default function ProjectDetails() {
         try {
             await ModelAPI.train({
                 datasetId: selectedDataset.id,
-                algorithm: selectedAlgorithm
+                algorithm: selectedAlgorithm,
+                hyperparameters: hyperparams
             });
             await loadModels();
         } catch (e) {
@@ -146,155 +182,295 @@ export default function ProjectDetails() {
         }
     };
 
+    const handleUpdateProject = async () => {
+        if (!editName.trim()) return;
+        try {
+            await ProjectAPI.update(id, { name: editName });
+            setProject({ ...project, name: editName });
+            setIsEditing(false);
+            setError(null);
+        } catch (e) {
+            console.error('Update failed:', e);
+            setError('Failed to rename workspace');
+        }
+    };
+
+    const handleDeleteProject = async () => {
+        if (!window.confirm('CRITICAL: Delete this workspace? All associated datasets and models will be permanently purged.')) return;
+        try {
+            await ProjectAPI.delete(id);
+            navigate('/');
+        } catch (e) {
+            console.error('Delete failed:', e);
+            setError('Failed to delete workspace');
+        }
+    };
+
     if (!project) return (
-        <div className="flex items-center justify-center h-screen">
-            <i className='bx bx-loader-alt animate-spin text-6xl text-teal-500'></i>
+        <div className="flex flex-col items-center justify-center h-screen space-y-4">
+            <Activity className="animate-spin text-6xl text-orange-500" />
+            <p className="text-[10px] font-black uppercase tracking-[0.5em] text-orange-500/40">Syncing Workspace...</p>
         </div>
     );
 
     return (
-        <div className="p-10 max-w-7xl mx-auto space-y-10 animate-in fade-in duration-700">
+        <div className="p-12 max-w-7xl mx-auto space-y-12 animate-in fade-in duration-700">
             {error && (
-                <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-4 flex items-center space-x-3">
-                    <i className='bx bx-error-circle text-red-500 text-2xl'></i>
-                    <p className="text-red-400 font-semibold">{error}</p>
+                <div className="bg-rose-500/10 border border-rose-500/30 rounded-2xl p-6 flex items-center justify-between animate-in slide-in-from-top-4">
+                    <div className="flex items-center space-x-4">
+                        <AlertCircle className="text-rose-500 w-6 h-6" />
+                        <p className="text-rose-400 font-bold uppercase tracking-tight text-sm">{error}</p>
+                    </div>
+                    <button onClick={() => setError(null)} className="text-rose-500/50 hover:text-rose-500 transition-colors">
+                        <X size={20} />
+                    </button>
                 </div>
             )}
 
             <header className="flex items-center justify-between">
-                <div className="flex items-center space-x-6">
+                <div className="flex items-center space-x-8">
                     <button
                         onClick={() => navigate('/')}
-                        className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-all group"
+                        className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-all group shadow-xl"
                     >
-                        <i className='bx bx-chevron-left text-3xl group-hover:-translate-x-1 transition-transform'></i>
+                        <ChevronLeft className="w-8 h-8 group-hover:-translate-x-1 transition-transform" />
                     </button>
-                    <div>
-                        <div className="flex items-center space-x-3 mb-1">
-                            <h1 className="text-4xl font-black tracking-tight italic bg-gradient-to-r from-emerald-400 via-teal-500 to-cyan-500 bg-clip-text text-transparent">{project.name}</h1>
-                            <span className="px-3 py-1 bg-teal-500/10 border border-teal-500/20 rounded-full text-[10px] font-black text-teal-400 uppercase tracking-widest">Active Workspace</span>
+                    <div className="space-y-2">
+                        <div className="flex items-center space-x-4">
+                            {isEditing ? (
+                                <div className="flex items-center space-x-4">
+                                    <input
+                                        type="text"
+                                        value={editName}
+                                        onChange={(e) => setEditName(e.target.value)}
+                                        className="text-4xl font-black bg-white/5 border-b-2 border-orange-500 outline-none px-2 py-1 italic uppercase tracking-tighter"
+                                        autoFocus
+                                        onKeyDown={(e) => e.key === 'Enter' && handleUpdateProject()}
+                                    />
+                                    <button onClick={handleUpdateProject} className="p-2 bg-orange-500 rounded-xl text-black hover:bg-orange-400 transition-all">
+                                        <Check size={20} />
+                                    </button>
+                                    <button onClick={() => { setIsEditing(false); setEditName(project.name); }} className="p-2 bg-white/10 rounded-xl text-white/40 hover:text-white transition-all">
+                                        <X size={20} />
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="flex items-center space-x-6 group">
+                                    <h1 className="text-5xl font-black tracking-tighter italic uppercase bg-gradient-to-r from-orange-400 via-amber-500 to-rose-500 bg-clip-text text-transparent">{project.name}</h1>
+                                    <button onClick={() => setIsEditing(true)} className="opacity-0 group-hover:opacity-100 p-2 hover:bg-white/5 rounded-xl transition-all">
+                                        <Edit3 size={18} className="text-orange-500/60" />
+                                    </button>
+                                </div>
+                            )}
+                            <div className="flex items-center gap-2 px-3 py-1 bg-orange-500/10 border border-orange-500/20 rounded-full text-[9px] font-black text-orange-400 uppercase tracking-widest">
+                                <Sparkles size={10} /> Active Connection
+                            </div>
                         </div>
-                        <p className="text-muted-foreground font-medium flex items-center">
-                            <i className='bx bx-network-chart mr-2 text-teal-500/50'></i>
+                        <p className="text-white/30 font-bold uppercase tracking-widest text-[10px] flex items-center italic">
+                            <Network className="mr-2 text-orange-500/40" size={14} />
                             Distributed Synthetic Intelligence Environment
                         </p>
                     </div>
+                </div>
+
+                <div className="flex items-center space-x-4">
+                    <button
+                        onClick={handleDeleteProject}
+                        className="flex items-center space-x-3 px-6 py-4 bg-rose-500/5 hover:bg-rose-500/20 border border-rose-500/20 rounded-2xl text-rose-500 transition-all group active:scale-95"
+                    >
+                        <Trash2 size={18} className="group-hover:rotate-12 transition-transform" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">Terminate Workspace</span>
+                    </button>
                 </div>
             </header>
 
             <div className="grid grid-cols-12 gap-10">
                 {/* Left Panel: Datasets */}
                 <div className="col-span-3 space-y-8">
-                    <div className="glass-panel p-6 rounded-[2.5rem] border border-white/5 space-y-6 relative overflow-hidden">
-                        <div className="flex justify-between items-center relative z-10 px-2">
-                            <h2 className="text-lg font-black tracking-tight flex items-center">
-                                <i className='bx bx-data mr-2 text-teal-500 text-xl'></i> Base Signals
+                    <div className="glass-panel p-8 rounded-[3.5rem] border border-white/5 space-y-8 relative overflow-hidden">
+                        <div className="flex justify-between items-center relative z-10">
+                            <h2 className="text-sm font-black uppercase tracking-[0.2em] flex items-center text-white/60">
+                                <Database className="mr-3 text-orange-500" size={18} /> Signal Vault
                             </h2>
-                            <label className="cursor-pointer bg-white group hover:scale-105 active:scale-95 transition-all w-8 h-8 rounded-xl flex items-center justify-center shadow-lg shadow-white/5">
-                                <i className='bx bx-upload text-black text-sm'></i>
+                            <label className="cursor-pointer bg-white group hover:scale-110 active:scale-95 transition-all w-10 h-10 rounded-2xl flex items-center justify-center shadow-2xl shadow-white/5">
+                                <Upload className="text-black" size={16} />
                                 <input type="file" accept=".csv" className="hidden" onChange={handleFileUpload} disabled={uploading} />
                             </label>
                         </div>
 
                         {uploading && (
-                            <div className="flex items-center justify-center py-4 bg-teal-500/10 border border-teal-500/20 rounded-2xl animate-pulse">
-                                <i className='bx bx-loader-alt animate-spin mr-2 text-teal-500 text-xl'></i>
-                                <span className="text-xs font-black text-teal-400 uppercase tracking-tighter">Uploading...</span>
+                            <div className="flex items-center justify-center py-5 bg-orange-500/10 border border-orange-500/20 rounded-2xl animate-pulse">
+                                <Activity className="animate-spin mr-3 text-orange-500" size={18} />
+                                <span className="text-[10px] font-black text-orange-400 uppercase tracking-tighter">Uploading Signal...</span>
                             </div>
                         )}
 
-                        <div className="space-y-2 relative z-10 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                        <div className="space-y-3 relative z-10 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
                             {datasets.map(ds => (
-                                <button
-                                    key={ds.id}
-                                    onClick={() => setSelectedDataset(ds)}
-                                    className={`w-full text-left p-3 rounded-2xl transition-all border group relative ${selectedDataset?.id === ds.id
-                                        ? "bg-white/10 border-white/20 shadow-[-5px_0_15px_-5px_rgba(20,184,166,0.5)]"
-                                        : "hover:bg-white/5 border-transparent hover:border-white/5"
-                                        }`}
-                                >
-                                    <div className="flex items-center justify-between pointer-events-none">
-                                        <div className="truncate">
-                                            <p className={`text-sm font-bold transition-colors ${selectedDataset?.id === ds.id ? 'text-white' : 'text-muted-foreground group-hover:text-white'}`}>
-                                                {ds.name}
-                                            </p>
+                                <div key={ds.id} className="group relative">
+                                    <button
+                                        onClick={() => setSelectedDataset(ds)}
+                                        className={`w-full text-left p-4 rounded-2xl transition-all border relative overflow-hidden ${selectedDataset?.id === ds.id
+                                            ? "bg-orange-500/10 border-orange-500/30 shadow-xl shadow-orange-500/5 translate-x-1"
+                                            : "hover:bg-white/5 border-transparent hover:border-white/10"
+                                            }`}
+                                    >
+                                        <div className="flex items-center justify-between pointer-events-none relative z-10">
+                                            <div className="truncate pr-6">
+                                                <p className={`text-xs font-black uppercase tracking-tight transition-colors ${selectedDataset?.id === ds.id ? 'text-white italic' : 'text-white/30 group-hover:text-white/60'}`}>
+                                                    {ds.name}
+                                                </p>
+                                            </div>
+                                            {selectedDataset?.id === ds.id && (
+                                                <div className="w-1.5 h-1.5 bg-amber-400 rounded-full shadow-[0_0_12px_#fbbf24] animate-pulse"></div>
+                                            )}
                                         </div>
                                         {selectedDataset?.id === ds.id && (
-                                            <div className="w-1.5 h-1.5 bg-teal-500 rounded-full shadow-[0_0_10px_#14b8a6]"></div>
+                                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-orange-500 rounded-full"></div>
                                         )}
-                                    </div>
-                                </button>
+                                    </button>
+                                    <button
+                                        onClick={async (e) => {
+                                            e.stopPropagation();
+                                            if (window.confirm(`Delete signal ${ds.name}?`)) {
+                                                try {
+                                                    await DatasetAPI.delete(ds.id);
+                                                    if (selectedDataset?.id === ds.id) setSelectedDataset(null);
+                                                    await loadDatasets();
+                                                } catch (err) {
+                                                    setError("Failed to delete dataset");
+                                                }
+                                            }
+                                        }}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 p-2 opacity-0 group-hover:opacity-100 hover:bg-rose-500/10 text-white/20 hover:text-rose-500 rounded-xl transition-all z-20"
+                                    >
+                                        <Trash2 size={14} />
+                                    </button>
+                                </div>
                             ))}
                         </div>
                     </div>
 
                     {/* Algorithm Selector Section */}
-                    <div className="glass-panel p-6 rounded-[2.5rem] border border-white/5 space-y-4">
-                        <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground px-2">Engine Settings</h3>
-                        <div className="space-y-2">
+                    <div className="glass-panel p-8 rounded-[3.5rem] border border-white/5 space-y-6">
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20">Engine Bays</h3>
+                        <div className="space-y-3">
                             {algorithms.map(algo => (
                                 <button
                                     key={algo.id}
                                     onClick={() => setSelectedAlgorithm(algo.id)}
-                                    className={`w-full text-left p-3 rounded-2xl transition-all border text-xs ${selectedAlgorithm === algo.id
-                                        ? "bg-teal-500/10 border-teal-500/30 text-teal-400"
-                                        : "border-transparent text-muted-foreground hover:bg-white/5"
+                                    className={`w-full text-left p-4 rounded-2xl transition-all border ${selectedAlgorithm === algo.id
+                                        ? "bg-orange-500/5 border-orange-500/30 text-orange-400"
+                                        : "border-transparent text-white/30 hover:bg-white/5 hover:text-white/60"
                                         }`}
                                 >
-                                    <p className="font-black uppercase tracking-tighter">{algo.name}</p>
-                                    <p className="opacity-50 mt-1 font-medium">{algo.desc}</p>
+                                    <p className="font-black uppercase tracking-widest text-[10px] mb-1">{algo.name}</p>
+                                    <p className="opacity-50 text-[10px] font-medium leading-tight italic">{algo.desc}</p>
                                 </button>
                             ))}
                         </div>
                     </div>
+
+                    {/* Fine-tune Settings */}
+                    <div className="glass-panel p-8 rounded-[3.5rem] border border-white/5 space-y-6">
+                        <button
+                            onClick={() => setShowTuneSettings(!showTuneSettings)}
+                            className="w-full flex justify-between items-center text-[10px] font-black uppercase tracking-[0.3em] text-white/20 hover:text-white/60 transition-colors"
+                        >
+                            <span className="flex items-center gap-2"><Settings size={14} /> Parameters</span>
+                            {showTuneSettings ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                        </button>
+
+                        {showTuneSettings && (
+                            <div className="space-y-6 animate-in slide-in-from-top-4 duration-300">
+                                <div className="space-y-2">
+                                    <label className="text-[9px] font-black tracking-widest text-white/20 uppercase">Epochs</label>
+                                    <input
+                                        type="number"
+                                        value={hyperparams.epochs}
+                                        onChange={(e) => setHyperparams({ ...hyperparams, epochs: parseInt(e.target.value) })}
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs focus:border-orange-500/50 outline-none transition-all font-bold"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[9px] font-black tracking-widest text-white/20 uppercase">Batch Size</label>
+                                    <input
+                                        type="number"
+                                        value={hyperparams.batchSize}
+                                        onChange={(e) => setHyperparams({ ...hyperparams, batchSize: parseInt(e.target.value) })}
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs focus:border-orange-500/50 outline-none transition-all font-bold"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[9px] font-black tracking-widest text-white/20 uppercase">Learning Rate</label>
+                                    <input
+                                        type="number"
+                                        step="0.0001"
+                                        value={hyperparams.learningRate}
+                                        onChange={(e) => setHyperparams({ ...hyperparams, learningRate: parseFloat(e.target.value) })}
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs focus:border-orange-500/50 outline-none transition-all font-bold"
+                                    />
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Right Panel: Content Tabs */}
-                <div className="col-span-9 space-y-8">
+                <div className="col-span-9 space-y-10">
                     {selectedDataset ? (
-                        <div className="space-y-8 animate-in slide-in-from-right-10 duration-500">
+                        <div className="space-y-10 animate-in slide-in-from-right-12 duration-700">
                             {/* Tabs Header */}
-                            <div className="flex items-center space-x-4 border-b border-white/5 pb-2">
+                            <div className="flex items-center space-x-8 border-b border-white/5 pb-4 px-2">
                                 <TabButton
                                     active={activeTab === 'engines'}
                                     onClick={() => setActiveTab('engines')}
-                                    icon="bx-chip"
+                                    icon={<Cpu size={18} />}
                                     label="Logic Engines"
                                 />
                                 <TabButton
                                     active={activeTab === 'analytics'}
                                     onClick={() => setActiveTab('analytics')}
-                                    icon="bx-bar-chart-alt-2"
+                                    icon={<BarChart3 size={18} />}
                                     label="Data Insights"
                                 />
                             </div>
 
                             {activeTab === 'engines' ? (
-                                <div className="space-y-8">
-                                    <div className="flex justify-between items-end">
-                                        <div>
-                                            <h2 className="text-3xl font-black tracking-tight mb-2">Generative Engines</h2>
-                                            <p className="text-muted-foreground text-sm font-medium">Active algorithmic models learning from <span className="text-white italic">{selectedDataset.name}</span></p>
+                                <div className="space-y-10">
+                                    <div className="flex justify-between items-end px-2">
+                                        <div className="space-y-2">
+                                            <h2 className="text-4xl font-black tracking-tighter uppercase italic">Generative <span className="text-orange-500">Engines</span></h2>
+                                            <p className="text-white/30 text-sm font-medium italic">Active algorithmic models learning from <span className="text-orange-400 font-black uppercase tracking-widest text-xs px-2 py-1 bg-orange-500/5 rounded-lg ml-1">{selectedDataset.name}</span></p>
                                         </div>
                                         <button
                                             onClick={handleTrain}
-                                            className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-8 py-4 rounded-3xl font-black text-xs uppercase tracking-widest flex items-center space-x-3 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-emerald-600/20"
+                                            className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white px-10 py-5 rounded-[1.75rem] font-black text-[11px] uppercase tracking-[0.2em] flex items-center space-x-3 hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-orange-600/20 group"
                                         >
-                                            <i className='bx bx-brain text-xl'></i>
-                                            <span>Train {selectedAlgorithm}</span>
+                                            <Brain className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+                                            <span>Train {selectedAlgorithm} Engine</span>
                                         </button>
                                     </div>
 
                                     <div className="grid gap-6">
-                                        {models.map(model => (
-                                            <div key={model.id} className="glass-panel p-8 rounded-[2.5rem] border border-white/5 flex justify-between items-center group relative overflow-hidden transition-all hover:border-white/10">
-                                                <div className="flex items-center space-x-6 relative z-10">
-                                                    <div className="w-16 h-16 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center text-muted-foreground shadow-lg group-hover:bg-teal-500/10 transition-all duration-500">
-                                                        <i className={`bx ${model.status === 'COMPLETED' ? 'bx-chip' : 'bx-cog bx-spin'} text-4xl`}></i>
+                                        {models.length === 0 ? (
+                                            <div className="glass-panel p-24 rounded-[3.5rem] border border-white/5 text-center relative overflow-hidden group">
+                                                <div className="absolute inset-0 bg-gradient-to-bm from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
+                                                <div className="w-24 h-24 mx-auto mb-8 rounded-3xl bg-orange-500/10 flex items-center justify-center border border-orange-500/20 group-hover:scale-110 group-hover:rotate-12 transition-all duration-700">
+                                                    <Cpu className="w-12 h-12 text-orange-400" />
+                                                </div>
+                                                <h3 className="text-2xl font-black italic tracking-tighter uppercase text-white/60 mb-2">No Engines Deployed</h3>
+                                                <p className="text-[10px] font-black uppercase tracking-[0.5em] text-white/20">Initiate training protocol to begin data synthesis</p>
+                                            </div>
+                                        ) : models.map(model => (
+                                            <div key={model.id} className="glass-panel p-10 rounded-[3.5rem] border border-white/5 flex justify-between items-center group relative overflow-hidden transition-all hover:border-orange-500/20 hover:bg-white/[0.02]">
+                                                <div className="flex items-center space-x-8 relative z-10">
+                                                    <div className="w-20 h-20 rounded-[1.5rem] bg-white/[0.02] border border-white/10 flex items-center justify-center text-white/30 shadow-2xl group-hover:bg-orange-500/10 group-hover:text-orange-400 group-hover:rotate-3 transition-all duration-700">
+                                                        {model.status === 'COMPLETED' ? <Cpu size={40} /> : <Activity className="animate-spin" size={40} />}
                                                     </div>
-                                                    <div>
-                                                        <h4 className="text-xl font-black tracking-tight leading-none mb-2">
-                                                            {model.algorithm} <span className="text-muted-foreground text-sm font-black italic ml-2">v{model.id}</span>
+                                                    <div className="space-y-2">
+                                                        <h4 className="text-2xl font-black tracking-tighter uppercase italic group-hover:text-orange-400 transition-colors">
+                                                            {model.algorithm} <span className="text-white/20 text-sm font-black italic ml-3 tracking-widest uppercase">Bay #{model.id.toString().padStart(3, '0')}</span>
                                                         </h4>
                                                         <StatusBadge status={model.status} />
                                                     </div>
@@ -304,10 +480,10 @@ export default function ProjectDetails() {
                                                     {model.status === 'COMPLETED' && (
                                                         <button
                                                             onClick={() => handleGenerate(model.id)}
-                                                            className="bg-white/10 hover:bg-white text-muted-foreground hover:text-black px-6 py-3 rounded-2xl flex items-center space-x-3 text-xs font-black uppercase tracking-widest transition-all duration-300 transform-gpu active:scale-95"
+                                                            className="bg-white/5 hover:bg-orange-500 text-white/40 hover:text-white px-8 py-4 rounded-2xl flex items-center space-x-4 text-[10px] font-black uppercase tracking-[0.3em] transition-all duration-500 hover:shadow-xl hover:shadow-orange-500/20 group/btn border border-transparent hover:border-orange-400/50 active:scale-95"
                                                         >
-                                                            <i className='bx bx-play-circle text-xl'></i>
-                                                            <span>Sample Generation</span>
+                                                            <PlayCircle className="w-5 h-5 group-hover/btn:scale-110 transition-transform" />
+                                                            <span>Run Synthesis</span>
                                                         </button>
                                                     )}
                                                 </div>
@@ -316,11 +492,17 @@ export default function ProjectDetails() {
                                     </div>
                                 </div>
                             ) : (
-                                <div className="space-y-8 min-h-[500px]">
+                                <div className="space-y-10 min-h-[600px] animate-in slide-in-from-bottom-12 duration-700 px-2">
                                     {loadingStats ? (
-                                        <div className="flex flex-col items-center justify-center h-full py-20 space-y-4">
-                                            <i className='bx bx-loader-alt animate-spin text-6xl text-teal-500'></i>
-                                            <p className="text-muted-foreground font-black uppercase tracking-widest text-xs animate-pulse text-center">Synthesizing Statistical Insights<br />Analyzing Data Patterns...</p>
+                                        <div className="flex flex-col items-center justify-center h-[500px] space-y-6">
+                                            <div className="relative">
+                                                <Activity className="animate-spin size-20 text-orange-500" />
+                                                <Sparkles className="absolute -top-2 -right-2 text-amber-400 animate-pulse" />
+                                            </div>
+                                            <div className="text-center space-y-2">
+                                                <p className="text-white font-black uppercase tracking-[0.5em] text-xs">Synthesizing Intelligence</p>
+                                                <p className="text-white/20 font-black uppercase tracking-[0.3em] text-[9px]">Analyzing Multidimensional Data Patterns...</p>
+                                            </div>
                                         </div>
                                     ) : (
                                         <AnalyticsDashboard stats={stats} />
@@ -329,10 +511,13 @@ export default function ProjectDetails() {
                             )}
                         </div>
                     ) : (
-                        <div className="bg-white/5 border border-dashed border-white/5 rounded-[3rem] h-full min-h-[500px] flex flex-col items-center justify-center text-center p-20 relative overflow-hidden group">
-                            <i className='bx bx-selection text-6xl text-muted-foreground/20 mb-6'></i>
-                            <h3 className="text-2xl font-black text-muted-foreground tracking-tight mb-2">Signal Required</h3>
-                            <p className="text-xs text-muted-foreground/60 max-w-xs uppercase tracking-tighter">Select a source dataset from the explorer to initialize engine bays and view intelligence insights.</p>
+                        <div className="bg-white/[0.01] border border-dashed border-white/5 rounded-[4rem] h-[700px] flex flex-col items-center justify-center text-center p-24 relative overflow-hidden group">
+                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-orange-500/[0.03] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
+                            <div className="w-32 h-32 bg-white/[0.02] rounded-[2.5rem] flex items-center justify-center mb-10 border border-white/5 group-hover:scale-110 group-hover:rotate-6 transition-all duration-700 shadow-2xl">
+                                <Fingerprint className="text-white/10 group-hover:text-orange-500/40 transition-colors" size={60} />
+                            </div>
+                            <h3 className="text-4xl font-black text-white/20 tracking-tighter uppercase italic mb-4">Signal Required</h3>
+                            <p className="text-sm text-white/10 max-w-sm uppercase tracking-widest font-black leading-relaxed">Select a source signal from the repository to initialize engine bays and view intelligence insights.</p>
                         </div>
                     )}
                 </div>
@@ -345,14 +530,17 @@ function TabButton({ active, onClick, icon, label }) {
     return (
         <button
             onClick={onClick}
-            className={`flex items-center space-x-2 px-6 py-3 rounded-t-2xl font-black text-xs uppercase tracking-widest transition-all
+            className={`flex items-center space-x-3 px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] transition-all duration-500 relative
                 ${active
-                    ? "bg-white/5 text-teal-400 border-t-2 border-teal-500"
-                    : "text-muted-foreground hover:text-white hover:bg-white/5"
+                    ? "text-orange-400 bg-orange-500/10 shadow-xl shadow-orange-500/5 translate-y-[-2px]"
+                    : "text-white/20 hover:text-white/60 hover:bg-white/5"
                 }`}
         >
-            <i className={`bx ${icon} text-lg`}></i>
+            <span className={active ? 'scale-110 transition-transform' : ''}>{icon}</span>
             <span>{label}</span>
+            {active && (
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-orange-500/50 blur-sm"></div>
+            )}
         </button>
     );
 }
@@ -360,12 +548,12 @@ function TabButton({ active, onClick, icon, label }) {
 function StatusBadge({ status }) {
     switch (status) {
         case 'COMPLETED':
-            return <span className="flex items-center text-[10px] font-black uppercase tracking-widest text-green-400"><i className='bx bxs-check-shield mr-1 text-xs'></i> Stable</span>;
+            return <span className="flex items-center text-[10px] font-black uppercase tracking-[0.3em] text-green-400/60 italic"><CheckCircle2 className="mr-2" size={12} /> Protocol: Stable</span>;
         case 'TRAINING':
-            return <span className="flex items-center text-[10px] font-black uppercase tracking-widest text-teal-400"><i className='bx bx-sync bx-spin mr-1 text-xs'></i> Learning</span>;
+            return <span className="flex items-center text-[10px] font-black uppercase tracking-[0.3em] text-orange-400/60 italic"><Activity className="animate-spin mr-2" size={12} /> Analysis: Learning</span>;
         case 'FAILED':
-            return <span className="flex items-center text-[10px] font-black uppercase tracking-widest text-red-500"><i className='bx bxs-error-alt mr-1 text-xs'></i> Disrupted</span>;
+            return <span className="flex items-center text-[10px] font-black uppercase tracking-[0.3em] text-rose-500/60 italic"><AlertCircle className="mr-2" size={12} /> Protocol: Disrupted</span>;
         default:
-            return <span className="flex items-center text-[10px] font-black uppercase tracking-widest text-muted-foreground"><i className='bx bx-timer mr-1 text-xs'></i> Queue</span>;
+            return <span className="flex items-center text-[10px] font-black uppercase tracking-[0.3em] text-white/20 italic"><Clock className="mr-2" size={12} /> Queue: Waiting</span>;
     }
 }

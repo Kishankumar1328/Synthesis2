@@ -31,20 +31,20 @@ const COLORS = {
         healthy: { bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', text: 'text-emerald-400', accent: 'bg-emerald-500' },
         warning: { bg: 'bg-amber-500/10', border: 'border-amber-500/20', text: 'text-amber-400', accent: 'bg-amber-500' },
         critical: { bg: 'bg-red-500/10', border: 'border-red-500/20', text: 'text-red-400', accent: 'bg-red-500' },
-        info: { bg: 'bg-blue-500/10', border: 'border-blue-500/20', text: 'text-blue-400', accent: 'bg-blue-500' },
+        info: { bg: 'bg-orange-500/10', border: 'border-orange-500/20', text: 'text-orange-400', accent: 'bg-orange-500' },
         neutral: { bg: 'bg-slate-500/10', border: 'border-slate-500/20', text: 'text-slate-400', accent: 'bg-slate-500' }
     },
     chart: {
-        primary: 'rgba(34, 197, 94, 0.85)',    // Emerald
-        secondary: 'rgba(59, 130, 246, 0.85)', // Blue
-        tertiary: 'rgba(249, 115, 22, 0.85)',  // Orange
+        primary: 'rgba(249, 115, 22, 0.85)',    // Orange
+        secondary: 'rgba(251, 191, 36, 0.85)', // Amber
+        tertiary: 'rgba(239, 68, 68, 0.85)',   // Red
         accent1: 'rgba(168, 85, 247, 0.85)',   // Purple
         accent2: 'rgba(236, 72, 153, 0.85)',   // Pink
-        accent3: 'rgba(14, 165, 233, 0.85)',   // Sky
+        accent3: 'rgba(245, 158, 11, 0.85)',   // Orange-Gold
     },
     correlation: {
-        positive: 'rgba(59, 130, 246, 0.7)',   // Blue
-        negative: 'rgba(249, 115, 22, 0.7)',   // Orange
+        positive: 'rgba(249, 115, 22, 0.7)',   // Orange
+        negative: 'rgba(239, 68, 68, 0.7)',    // Red
     }
 };
 
@@ -426,8 +426,8 @@ function TabButton({ active, onClick, icon, label }) {
         <button
             onClick={onClick}
             className={`flex items-center space-x-2 px-5 py-3 text-sm font-bold border-b-2 transition-all whitespace-nowrap ${active
-                    ? 'border-emerald-400 text-emerald-400 bg-emerald-400/10'
-                    : 'border-transparent text-muted-foreground hover:text-white hover:bg-white/5'
+                ? 'border-orange-400 text-orange-400 bg-orange-400/10'
+                : 'border-transparent text-muted-foreground hover:text-white hover:bg-white/5'
                 }`}
         >
             <i className={`bx ${icon} text-lg`}></i>
@@ -636,8 +636,8 @@ function FeatureDistributionPanel({ columns, selectedFeature, onFeatureSelect, v
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                        <i className='bx bx-bar-chart-alt-2 text-emerald-400 text-lg'></i>
+                    <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                        <i className='bx bx-bar-chart-alt-2 text-orange-400 text-lg'></i>
                     </div>
                     <div>
                         <h3 className="text-base font-black tracking-tight">
@@ -655,7 +655,7 @@ function FeatureDistributionPanel({ columns, selectedFeature, onFeatureSelect, v
                     <button
                         onClick={() => onViewModeChange('raw')}
                         className={`px-3 py-1.5 text-xs font-bold rounded transition-all ${viewMode === 'raw'
-                            ? 'bg-emerald-500/20 text-emerald-400'
+                            ? 'bg-orange-500/20 text-orange-400'
                             : 'text-muted-foreground hover:text-white'
                             }`}
                     >
@@ -664,7 +664,7 @@ function FeatureDistributionPanel({ columns, selectedFeature, onFeatureSelect, v
                     <button
                         onClick={() => onViewModeChange('normalized')}
                         className={`px-3 py-1.5 text-xs font-bold rounded transition-all ${viewMode === 'normalized'
-                            ? 'bg-emerald-500/20 text-emerald-400'
+                            ? 'bg-orange-500/20 text-orange-400'
                             : 'text-muted-foreground hover:text-white'
                             }`}
                     >
@@ -728,7 +728,7 @@ function FeatureChart({ column, color, viewMode, isSelected, onSelect }) {
         <div
             onClick={onSelect}
             className={`bg-white/[0.02] border rounded-lg p-4 hover:bg-white/[0.04] transition-all cursor-pointer ${isSelected
-                ? 'border-emerald-500/50 ring-2 ring-emerald-500/20 shadow-lg shadow-emerald-500/10'
+                ? 'border-orange-500/50 ring-2 ring-orange-500/20 shadow-lg shadow-orange-500/10'
                 : isRisky
                     ? 'border-red-500/30'
                     : 'border-white/5'
@@ -743,7 +743,7 @@ function FeatureChart({ column, color, viewMode, isSelected, onSelect }) {
                 </div>
                 <div className="flex items-center space-x-1.5 flex-shrink-0">
                     {viewMode === 'normalized' && (
-                        <span className="text-[8px] bg-emerald-500/10 px-1.5 py-0.5 rounded font-black uppercase tracking-wider text-emerald-400 border border-emerald-500/20">
+                        <span className="text-[8px] bg-orange-500/10 px-1.5 py-0.5 rounded font-black uppercase tracking-wider text-orange-400 border border-orange-500/20">
                             %
                         </span>
                     )}

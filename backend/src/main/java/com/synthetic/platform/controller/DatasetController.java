@@ -45,4 +45,9 @@ public class DatasetController {
         Dataset dataset = datasetService.findById(id);
         return aiService.detectAnomalies(dataset.getFilePath());
     }
+
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Long id) {
+        datasetService.delete(id);
+    }
 }

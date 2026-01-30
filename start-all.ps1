@@ -87,6 +87,11 @@ $javaHomeSet = if ($env:JAVA_HOME) { "`$env:JAVA_HOME = '$env:JAVA_HOME';" } els
 
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "$javaHomeSet cd '$backendPath'; Write-Host 'Building and starting Spring Boot backend...' -ForegroundColor Cyan; .\mvnw.cmd spring-boot:run"
 
+# Start AI Copilot Service
+Write-Host "Starting AI Copilot Service..." -ForegroundColor Yellow
+$aiServicePath = Join-Path $scriptPath "ai-engine"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$scriptPath'; if (-not (Test-Path 'ai-engine/venv')) { Write-Host 'Setting up Python environment...' -ForegroundColor Cyan; pip install -r ai-engine/requirements.txt }; Write-Host 'Starting AI Engine...' -ForegroundColor Cyan; python ai-engine/ai_copilot_service.py"
+
 # Wait for backend to initialize
 Write-Host "Waiting 30 seconds for backend to initialize..." -ForegroundColor Yellow
 Start-Sleep -Seconds 30

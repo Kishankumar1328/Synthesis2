@@ -2,6 +2,8 @@ package com.synthetic.platform.service;
 
 import com.synthetic.platform.model.AIModel;
 import com.synthetic.platform.repository.AIModelRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +22,7 @@ import java.util.concurrent.CompletableFuture;
 public class AIService {
 
     private final AIModelRepository modelRepository;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Value("${app.python.path:python}")
     private String pythonPath;
@@ -56,25 +59,49 @@ public class AIService {
 
                 if (trainingMetrics != null && !trainingMetrics.isEmpty()) {
                     try {
-                        // Parse JSON to extract hyperparameters
-                        if (trainingMetrics.contains("epochs")) {
-                            epochs = Integer.parseInt(trainingMetrics.replaceAll(".*\"epochs\":(\\d+).*", "$1"));
-                        }
-                        if (trainingMetrics.contains("batch_size")) {
-                            batchSize = Integer.parseInt(trainingMetrics.replaceAll(".*\"batch_size\":(\\d+).*", "$1"));
-                        }
-                        if (trainingMetrics.contains("learning_rate")) {
-                            learningRate = Double
-                                    .parseDouble(trainingMetrics.replaceAll(".*\"learning_rate\":([0-9.]+).*", "$1"));
-                        }
+                        JsonNode node = objectMapper.readTree(trainingMetrics);
+                        if (node.has("epochs"))
+                            epochs = node.get("epochs").asInt();
+                        if (node.has("batchSize"))
+                            batchSize = node.get("batchSize").asInt();
+                        if (node.has("learningRate"))
+                            learningRate = node.get("learningRate").asDouble();
+
+                        // Handle potential snake_case from old/cached frontend
+                        if (node.has("batch_size") && !node.has("batchSize"))
+                            batchSize = node.get("batch_size").asInt();
+                        if (node.has("learning_rate") && !node.has("learningRate"))
+                            learningRate = node.get("learning_rate").asDouble();
                     } catch (Exception e) {
                         log.warn("Failed to parse hyperparameters, using defaults", e);
                     }
                 }
 
-                // OVERRIDE: Enforce fast training for demo
-                epochs = 5;
-                batchSize = 50;
+                // Removed the override to allow real fine-tuning
+
+                int discSteps = 1;
+                String genDim = "";
+                String discDim = "";
+
+                if (trainingMetrics != null && !trainingMetrics.isEmpty()) {
+                    try {
+                        JsonNode node = objectMapper.readTree(trainingMetrics);
+                        if (node.has("discriminatorSteps"))
+                            discSteps = node.get("discriminatorSteps").asInt();
+                        if (node.has("generatorDim"))
+                            genDim = node.get("generatorDim").asText();
+                        if (node.has("discriminatorDim"))
+                            discDim = node.get("discriminatorDim").asText();
+
+                        // Snake case fallbacks
+                        if (node.has("discriminator_steps") && !node.has("discriminatorSteps"))
+                            discSteps = node.get("discriminator_steps").asInt();
+                        if (node.has("generator_dim") && !node.has("generatorDim"))
+                            genDim = node.get("generator_dim").asText();
+                    } catch (Exception e) {
+                        log.warn("Failed to parse additional hyperparameters", e);
+                    }
+                }
 
                 ProcessBuilder pb = new ProcessBuilder(
                         pythonPath, scriptPath,
@@ -83,7 +110,17 @@ public class AIService {
                         "--algorithm", model.getAlgorithm(),
                         "--epochs", String.valueOf(epochs),
                         "--batch_size", String.valueOf(batchSize),
-                        "--learning_rate", String.valueOf(learningRate));
+                        "--learning_rate", String.valueOf(learningRate),
+                        "--discriminator_steps", String.valueOf(discSteps));
+
+                if (genDim != null && !genDim.isEmpty()) {
+                    pb.command().add("--generator_dim");
+                    pb.command().add(genDim);
+                }
+                if (discDim != null && !discDim.isEmpty()) {
+                    pb.command().add("--discriminator_dim");
+                    pb.command().add(discDim);
+                }
 
                 pb.redirectErrorStream(true);
                 Process process = pb.start();

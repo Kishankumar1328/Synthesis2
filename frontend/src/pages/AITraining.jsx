@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Brain, Zap, Download, TrendingUp, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { Brain, Zap, Download, TrendingUp, CheckCircle, Clock, XCircle, Sparkles, FileText } from 'lucide-react';
 import { useProjects } from '../hooks/useProjects';
 import { useDatasets } from '../hooks/useDatasets';
 import { useAI } from '../hooks/useAI';
@@ -43,10 +43,10 @@ export default function AITraining() {
                 batchSize: hyperparameters.batch_size,
                 learningRate: hyperparameters.learning_rate
             });
-            alert('Model training started! Check status below.');
+            alert('Training sequence initiated.');
         } catch (e) {
             console.error('Training failed:', e);
-            alert('Failed to start training.');
+            alert('Protocol error: Training failed.');
         }
     };
 
@@ -56,225 +56,213 @@ export default function AITraining() {
         try {
             await generateData(modelId, parseInt(count));
         } catch (e) {
-            alert('Generation failed.');
+            alert('Data synthesis failed.');
         }
     };
 
     const getStatusIcon = (status) => {
         switch (status) {
-            case 'COMPLETED':
-                return <CheckCircle className="w-5 h-5 text-green-500" />;
+            case 'COMPLETED': return <CheckCircle className="w-5 h-5 text-green-500" />;
             case 'TRAINING':
-            case 'PENDING':
-                return <Clock className="w-5 h-5 text-yellow-500 animate-spin" />;
-            case 'FAILED':
-                return <XCircle className="w-5 h-5 text-red-500" />;
-            default:
-                return <Clock className="w-5 h-5 text-gray-500" />;
+            case 'PENDING': return <Clock className="w-5 h-5 text-orange-400 animate-spin" />;
+            case 'FAILED': return <XCircle className="w-5 h-5 text-rose-500" />;
+            default: return <Clock className="w-5 h-5 text-white/20" />;
         }
     };
 
     const getStatusColor = (status) => {
         switch (status) {
-            case 'COMPLETED':
-                return 'bg-green-500/10 text-green-400 border-green-500/30';
+            case 'COMPLETED': return 'text-green-400 border-green-500/20 bg-green-500/5';
             case 'TRAINING':
-            case 'PENDING':
-                return 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30';
-            case 'FAILED':
-                return 'bg-red-500/10 text-red-400 border-red-500/30';
-            default:
-                return 'bg-gray-500/10 text-gray-400 border-gray-500/30';
+            case 'PENDING': return 'text-orange-400 border-orange-500/20 bg-orange-500/5';
+            case 'FAILED': return 'text-rose-400 border-rose-500/20 bg-rose-500/5';
+            default: return 'text-white/20 border-white/10 bg-white/5';
         }
     };
 
     return (
-        <div className="p-12 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700">
+        <div className="p-12 max-w-7xl mx-auto space-y-12 animate-in fade-in duration-700">
             {/* Header */}
-            <header>
-                <h1 className="text-5xl font-black tracking-tighter mb-3 bg-gradient-to-r from-emerald-400 via-teal-500 to-cyan-500 bg-clip-text text-transparent">
-                    AI Model Training
+            <header className="space-y-4">
+                <div className="flex items-center gap-3 px-4 py-2 bg-orange-500/10 border border-orange-500/20 rounded-2xl w-fit">
+                    <Sparkles className="w-4 h-4 text-orange-400" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-orange-400">Neural Synthesis</span>
+                </div>
+                <h1 className="text-6xl font-black tracking-tighter italic">
+                    Neural <span className="text-gradient-orange">Training</span>
                 </h1>
-                <p className="text-muted-foreground text-lg font-medium">
-                    Train AI models and generate synthetic data
+                <p className="text-white/40 text-lg font-medium max-w-2xl">
+                    Configure and deploy generative models for high-fidelity synthetic data production.
                 </p>
             </header>
 
-            {/* Training Configuration */}
-            <div className="glass-panel p-8 rounded-[2rem] border border-white/10">
-                <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
-                    <Brain className="w-6 h-6 text-emerald-500" />
-                    Train New Model
-                </h2>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Configuration Panel */}
+                <div className="lg:col-span-1 space-y-8">
+                    <div className="glass-panel p-10 rounded-[3rem] border border-white/5 space-y-10 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-48 h-48 bg-orange-500/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl group-hover:bg-orange-500/10 transition-all"></div>
 
-                <div className="grid grid-cols-2 gap-6">
-                    {/* Dataset Selection */}
-                    <div>
-                        <label className="block text-sm font-bold mb-2 text-muted-foreground">
-                            Select Dataset
-                        </label>
-                        <select
-                            value={selectedDataset || ''}
-                            onChange={(e) => setSelectedDataset(e.target.value)}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:ring-2 ring-emerald-500/50 outline-none"
-                        >
-                            <option value="">Choose a dataset...</option>
-                            {datasets.map((dataset) => (
-                                <option key={dataset.id} value={dataset.id}>
-                                    {dataset.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+                        <h2 className="text-xl font-black uppercase tracking-widest text-white/60 flex items-center gap-4">
+                            <Brain className="w-6 h-6 text-orange-500" /> Engine Config
+                        </h2>
 
-                    {/* Algorithm Selection */}
-                    <div>
-                        <label className="block text-sm font-bold mb-2 text-muted-foreground">
-                            Algorithm
-                        </label>
-                        <select
-                            value={algorithm}
-                            onChange={(e) => setAlgorithm(e.target.value)}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:ring-2 ring-emerald-500/50 outline-none"
-                        >
-                            <option value="CTGAN">CTGAN (Recommended)</option>
-                            <option value="TVAE">TVAE</option>
-                            <option value="GaussianCopula">Gaussian Copula</option>
-                            <option value="CopulaGAN">Copula GAN</option>
-                        </select>
-                    </div>
-
-                    {/* Hyperparameters */}
-                    <div>
-                        <label className="block text-sm font-bold mb-2 text-muted-foreground">
-                            Epochs
-                        </label>
-                        <input
-                            type="number"
-                            value={hyperparameters.epochs}
-                            onChange={(e) => setHyperparameters({ ...hyperparameters, epochs: parseInt(e.target.value) })}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:ring-2 ring-emerald-500/50 outline-none"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-bold mb-2 text-muted-foreground">
-                            Batch Size
-                        </label>
-                        <input
-                            type="number"
-                            value={hyperparameters.batch_size}
-                            onChange={(e) => setHyperparameters({ ...hyperparameters, batch_size: parseInt(e.target.value) })}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:ring-2 ring-emerald-500/50 outline-none"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-bold mb-2 text-muted-foreground">
-                            Learning Rate
-                        </label>
-                        <input
-                            type="number"
-                            step="0.0001"
-                            value={hyperparameters.learning_rate}
-                            onChange={(e) => setHyperparameters({ ...hyperparameters, learning_rate: parseFloat(e.target.value) })}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:ring-2 ring-emerald-500/50 outline-none"
-                        />
-                    </div>
-                </div>
-
-                <button
-                    onClick={handleTrainModel}
-                    disabled={isTraining || !selectedDataset}
-                    className="mt-6 w-full bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-4 rounded-2xl font-bold transition-all shadow-lg shadow-emerald-600/20 disabled:opacity-50 flex items-center justify-center gap-3"
-                >
-                    {isTraining ? (
-                        <>
-                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            Training...
-                        </>
-                    ) : (
-                        <>
-                            <Zap className="w-5 h-5" />
-                            Start Training
-                        </>
-                    )}
-                </button>
-            </div>
-
-            {/* Current Training Status */}
-            {currentModel && (
-                <div className="glass-panel p-8 rounded-[2rem] border border-white/10 animate-in slide-in-from-bottom-8">
-                    <h3 className="text-xl font-bold mb-4">Current Training Status</h3>
-                    <div className="flex items-center gap-4">
-                        {getStatusIcon(currentModel.status)}
-                        <div className="flex-1">
-                            <p className="font-bold">Model ID: {currentModel.id}</p>
-                            <p className="text-sm text-muted-foreground">Algorithm: {currentModel.algorithm}</p>
-                        </div>
-                        <span className={`px-4 py-2 rounded-xl font-bold text-sm border ${getStatusColor(currentModel.status)}`}>
-                            {currentModel.status}
-                        </span>
-                    </div>
-                </div>
-            )}
-
-            {/* Trained Models */}
-            <div className="space-y-4">
-                <h2 className="text-2xl font-bold flex items-center gap-3">
-                    <TrendingUp className="w-6 h-6 text-green-500" />
-                    Trained Models ({trainedModels.length})
-                </h2>
-
-                {trainedModels.length === 0 ? (
-                    <div className="glass-panel p-12 rounded-[2rem] border border-white/10 text-center">
-                        <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                            <Brain className="w-12 h-12 text-emerald-400" />
-                        </div>
-                        <h3 className="text-2xl font-bold mb-3">No Models Trained Yet</h3>
-                        <p className="text-muted-foreground max-w-md mx-auto">
-                            Select a dataset and start training your first AI model!
-                        </p>
-                    </div>
-                ) : (
-                    <div className="grid gap-4">
-                        {trainedModels.map((model) => (
-                            <div
-                                key={model.id}
-                                className="glass-panel p-6 rounded-2xl border border-white/10 hover:border-emerald-500/30 transition-all"
-                            >
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center">
-                                            {getStatusIcon(model.status)}
-                                        </div>
-                                        <div>
-                                            <h3 className="font-bold text-lg">Model #{model.id}</h3>
-                                            <p className="text-sm text-muted-foreground">
-                                                Algorithm: {model.algorithm} • Created: {new Date(model.createdAt).toLocaleDateString()}
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-2">
-                                        <span className={`px-4 py-2 rounded-xl font-bold text-sm border ${getStatusColor(model.status)}`}>
-                                            {model.status}
-                                        </span>
-                                        {model.status === 'COMPLETED' && (
-                                            <button
-                                                onClick={() => handleGenerateDataUI(model.id)}
-                                                className="px-6 py-3 bg-green-600/20 hover:bg-green-600/30 text-green-400 rounded-xl font-bold transition-all flex items-center gap-2"
-                                            >
-                                                <Download className="w-4 h-4" />
-                                                Generate Data
-                                            </button>
-                                        )}
-                                    </div>
+                        <div className="space-y-6 relative z-10 text-white">
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-black text-white/30 uppercase tracking-widest">Target Signal</label>
+                                <div className="relative">
+                                    <FileText className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-orange-500/50" />
+                                    <select
+                                        value={selectedDataset || ''}
+                                        onChange={(e) => setSelectedDataset(e.target.value)}
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-4 focus:ring-2 ring-orange-500/40 outline-none appearance-none transition-all font-bold text-xs"
+                                    >
+                                        <option value="" className="bg-[#05070a]">Select Signal...</option>
+                                        {datasets.map((dataset) => (
+                                            <option key={dataset.id} value={dataset.id} className="bg-[#05070a]">
+                                                {dataset.name}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
                             </div>
-                        ))}
+
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-black text-white/30 uppercase tracking-widest">Protocol</label>
+                                <select
+                                    value={algorithm}
+                                    onChange={(e) => setAlgorithm(e.target.value)}
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 focus:ring-2 ring-orange-500/40 outline-none appearance-none transition-all font-bold text-xs"
+                                >
+                                    <option value="CTGAN" className="bg-[#05070a]">CTGAN (Optimized)</option>
+                                    <option value="TVAE" className="bg-[#05070a]">TVAE (Efficiency)</option>
+                                    <option value="GaussianCopula" className="bg-[#05070a]">Gaussian Copula</option>
+                                    <option value="CopulaGAN" className="bg-[#05070a]">Copula GAN</option>
+                                </select>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black text-white/30 uppercase tracking-widest">Epochs</label>
+                                    <input
+                                        type="number"
+                                        value={hyperparameters.epochs}
+                                        onChange={(e) => setHyperparameters({ ...hyperparameters, epochs: parseInt(e.target.value) })}
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 focus:ring-2 ring-orange-500/40 outline-none transition-all font-bold text-xs"
+                                    />
+                                </div>
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black text-white/30 uppercase tracking-widest">Batch</label>
+                                    <input
+                                        type="number"
+                                        value={hyperparameters.batch_size}
+                                        onChange={(e) => setHyperparameters({ ...hyperparameters, batch_size: parseInt(e.target.value) })}
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 focus:ring-2 ring-orange-500/40 outline-none transition-all font-bold text-xs"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={handleTrainModel}
+                            disabled={isTraining || !selectedDataset}
+                            className="w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-[11px] transition-all shadow-xl shadow-orange-600/20 disabled:opacity-50 active:scale-95 group/btn"
+                        >
+                            {isTraining ? (
+                                <div className="flex items-center justify-center gap-3">
+                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    Synthesizing...
+                                </div>
+                            ) : (
+                                <div className="flex items-center justify-center gap-3">
+                                    <Zap className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                                    Launch Training
+                                </div>
+                            )}
+                        </button>
                     </div>
-                )}
+
+                    {currentModel && (
+                        <div className="glass-panel p-8 rounded-[2.5rem] border border-orange-500/20 bg-orange-500/5 animate-in slide-in-from-bottom-4 relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-orange-400/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:bg-orange-400/20 transition-all"></div>
+                            <h3 className="text-[10px] font-black uppercase tracking-widest text-orange-400 mb-6 flex items-center gap-2">
+                                <div className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse"></div> Pulse Indicator
+                            </h3>
+                            <div className="flex items-center gap-6 relative z-10">
+                                <div className="w-16 h-16 rounded-2xl bg-orange-400/10 flex items-center justify-center border border-orange-400/20">
+                                    {getStatusIcon(currentModel.status)}
+                                </div>
+                                <div className="flex-1 space-y-1">
+                                    <p className="font-black text-xl italic tracking-tight uppercase leading-none">{currentModel.algorithm}</p>
+                                    <p className="text-[10px] text-orange-400/60 font-black uppercase tracking-widest italic">{currentModel.status}</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Registry Panel */}
+                <div className="lg:col-span-2">
+                    <div className="glass-panel p-10 rounded-[3.5rem] border border-white/5 space-y-10 min-h-[600px]">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-xl font-black uppercase tracking-widest text-white/60">Engine Hub</h2>
+                            <div className="flex items-center gap-3 px-5 py-2 bg-white/5 border border-white/5 rounded-2xl">
+                                <TrendingUp className="w-4 h-4 text-orange-400" />
+                                <span className="text-[10px] font-black uppercase tracking-widest text-white/40">{trainedModels.length} Models Active</span>
+                            </div>
+                        </div>
+
+                        {trainedModels.length === 0 ? (
+                            <div className="py-32 text-center opacity-20">
+                                <div className="w-24 h-24 mx-auto mb-8 rounded-[2.5rem] bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform duration-700">
+                                    <Brain className="w-12 h-12" />
+                                </div>
+                                <h3 className="text-2xl font-black italic tracking-tighter uppercase mb-2">No Engines Registered</h3>
+                                <p className="text-[10px] font-black uppercase tracking-[0.4em]">Initialize training sequence to begin</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-4 custom-scrollbar max-h-[700px] overflow-y-auto pr-4">
+                                {trainedModels.map((model) => (
+                                    <div
+                                        key={model.id}
+                                        className="p-8 rounded-[2.5rem] bg-white/[0.01] border border-white/5 hover:border-orange-500/20 hover:bg-white/[0.04] transition-all flex items-center justify-between group relative overflow-hidden"
+                                    >
+                                        <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/[0.02] rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:bg-orange-500/[0.05] transition-all"></div>
+
+                                        <div className="flex items-center gap-8 relative z-10">
+                                            <div className="w-20 h-20 bg-gradient-to-br from-orange-500/20 to-amber-500/10 rounded-[1.5rem] flex items-center justify-center group-hover:scale-110 transition-transform group-hover:rotate-6 shadow-xl">
+                                                {getStatusIcon(model.status)}
+                                            </div>
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-4">
+                                                    <h3 className="font-black text-3xl italic tracking-tighter uppercase leading-none group-hover:text-orange-400 transition-colors">#{model.id.toString().padStart(4, '0')}</h3>
+                                                    <span className={`text-[8px] px-3 py-1 rounded-lg font-black uppercase tracking-widest border ${getStatusColor(model.status)}`}>
+                                                        {model.status}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-6">
+                                                    <p className="text-[10px] text-white/30 font-black uppercase tracking-widest italic">{model.algorithm}</p>
+                                                    <div className="w-1 h-1 bg-white/10 rounded-full"></div>
+                                                    <p className="text-[10px] text-white/30 font-black uppercase tracking-widest">{new Date(model.createdAt).toLocaleDateString()}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="relative z-10">
+                                            {model.status === 'COMPLETED' && (
+                                                <button
+                                                    onClick={() => handleGenerateDataUI(model.id)}
+                                                    className="px-8 py-4 bg-white/5 hover:bg-orange-500 text-white/60 hover:text-white rounded-[1.25rem] font-black text-[10px] uppercase tracking-[0.2em] transition-all border border-transparent hover:border-orange-400/50 shadow-xl hover:shadow-orange-500/20 active:scale-95 flex items-center gap-3"
+                                                >
+                                                    <Download size={14} /> Synthesize
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
         </div>
     );

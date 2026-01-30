@@ -36,6 +36,25 @@ export function useProjects() {
         }
     };
 
+    const updateProject = async (id, name) => {
+        try {
+            const res = await ProjectAPI.update(id, { name });
+            await loadProjects();
+            return res.data;
+        } catch (err) {
+            throw err;
+        }
+    };
+
+    const deleteProject = async (id) => {
+        try {
+            await ProjectAPI.delete(id);
+            await loadProjects();
+        } catch (err) {
+            throw err;
+        }
+    };
+
     useEffect(() => {
         loadProjects();
     }, [loadProjects]);
@@ -45,6 +64,8 @@ export function useProjects() {
         loading,
         error,
         refresh: loadProjects,
-        createProject
+        createProject,
+        updateProject,
+        deleteProject
     };
 }

@@ -28,4 +28,14 @@ public class ProjectController {
     public Project create(@RequestBody Project project) {
         return projectService.create(project);
     }
+
+    @PutMapping("/{id}")
+    public Project update(@PathVariable Long id, @RequestBody Project project) {
+        return projectService.update(id, project);
+    }
+
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Long id) {
+        projectService.delete(id);
+    }
 }

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend Diagnostic</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #00ff00;
+        }
+
+        .test {
+            margin: 10px 0;
+            padding: 10px;
+            background: #2a2a2a;
+        }
+
+        .pass {
+            border-left: 4px solid #00ff00;
+        }
+
+        .fail {
+            border-left: 4px solid #ff0000;
+            color: #ff6666;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🔍 Frontend Diagnostic Tool</h1>
+    <div id="results"></div>
+
+    <script type="module">
+        const results = document.getElementById('results');
+
+        function log(message, pass = true) {
+            const div = document.createElement('div');
+            div.className = `test ${pass ? 'pass' : 'fail'}`;
+            div.textContent = `${pass ? '✓' : '✗'} ${message}`;
+            results.appendChild(div);
+        }
+
+        // Test 1: React availability
+        try {
+            const React = await import('/node_modules/.vite/deps/react.js?v=2533e06b');
+            log('React module loads');
+        } catch (e) {
+            log(`React module FAILED: ${e.message}`, false);
+        }
+
+        // Test 2: Router availability
+        try {
+            const Router = await import('/node_modules/.vite/deps/react-router-dom.js?v=2533e06b');
+            log('React Router loads');
+        } catch (e) {
+            log(`React Router FAILED: ${e.message}`, false);
+        }
+
+        // Test 3: API module
+        try {
+            const API = await import('/src/api/index.js');
+            log('API module loads');
+            log(`API exports: ${Object.keys(API).join(', ')}`);
+        } catch (e) {
+            log(`API module FAILED: ${e.message}`, false);
+        }
+
+        // Test 4: App component
+        try {
+            const App = await import('/src/App.jsx');
+            log('App.jsx loads');
+        } catch (e) {
+            log(`App.jsx FAILED: ${e.message}`, false);
+        }
+
+        // Test 5: ProjectDetails component
+        try {
+            const PD = await import('/src/pages/ProjectDetails.jsx');
+            log('ProjectDetails.jsx loads');
+        } catch (e) {
+            log(`ProjectDetails.jsx FAILED: ${e.message}`, false);
+        }
+
+        // Test 6: AnalyticsDashboard component
+        try {
+            const AD = await import('/src/components/AnalyticsDashboard.jsx');
+            log('AnalyticsDashboard.jsx loads');
+        } catch (e) {
+            log(`AnalyticsDashboard.jsx FAILED: ${e.message}`, false);
+        }
+
+        log('=== Diagnostic Complete ===');
+    </script>
+</body>
+
+</html>

@@ -64,6 +64,7 @@
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
 }
 
 /* Background Enhancement */
@@ -72,4 +73,30 @@ body {
     radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.08), transparent 25%),
     radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.08), transparent 25%);
   background-attachment: fixed;
+}
+
+/* Text Gradients */
+.text-gradient-blue {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-sky-400 to-indigo-400;
+}
+
+.text-gradient-orange {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-orange-400 via-amber-400 to-rose-400;
+}
+
+/* Background Gradients */
+.bg-gradient-blue-soft {
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.05) 50%, transparent 100%);
+}
+
+.bg-gradient-orange-soft {
+  background: linear-gradient(90deg, rgba(249, 115, 22, 0.15) 0%, rgba(249, 115, 22, 0.05) 50%, transparent 100%);
+}
+
+.text-shadow-glow {
+  text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+.text-shadow-glow-orange {
+  text-shadow: 0 0 10px rgba(249, 115, 22, 0.5);
 }

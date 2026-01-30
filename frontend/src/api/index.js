@@ -21,7 +21,9 @@ api.interceptors.response.use(
 export const ProjectAPI = {
     getAll: () => api.get('/projects'),
     getOne: (id) => api.get(`/projects/${id}`),
-    create: (data) => api.post('/projects', data)
+    create: (data) => api.post('/projects', data),
+    update: (id, data) => api.put(`/projects/${id}`, data),
+    delete: (id) => api.delete(`/projects/${id}`)
 };
 
 export const DatasetAPI = {
